@@ -4,45 +4,64 @@
 
 package frc.robot.subsystems;
 
-import edu.wpi.first.wpilibj.DutyCycleEncoder;
-import edu.wpi.first.wpilibj.Encoder;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.cscore.HttpCamera;
+import com.revrobotics.CANSparkLowLevel.MotorType;
+import com.revrobotics.AbsoluteEncoder;
+import com.revrobotics.AlternateEncoderType;
+import com.revrobotics.CANSparkMax;
+import com.revrobotics.SparkAbsoluteEncoder;
+
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.DutyCycleEncoder;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import com.revrobotics.CANSparkMax;
-import com.revrobotics.CANSparkLowLevel.MotorType;
+import frc.robot.Constants;
 
 public class ShooterTest1 extends SubsystemBase
 {
     //Declare our motors here first
     static CANSparkMax pivotMotor1 = new CANSparkMax(35,MotorType.kBrushless);
     static CANSparkMax pivotMotor2 = new CANSparkMax(36, MotorType.kBrushless);
-    CANSparkMax shooter1 = new CANSparkMax(37,MotorType.kBrushless);
-    CANSparkMax shooter2 = new CANSparkMax(38,MotorType.kBrushless);
-    CANSparkMax intake = new CANSparkMax(39,MotorType.kBrushless);
+    static CANSparkMax shooter1 = new CANSparkMax(37,MotorType.kBrushless);
+    static CANSparkMax shooter2 = new CANSparkMax(38,MotorType.kBrushless);
+    static CANSparkMax intake = new CANSparkMax(39,MotorType.kBrushless);
+    //intakeEncoder = intake.getAbsoluteEncoder();
+
+
     static boolean reset = false;
-    PIDController PID = new PIDController(6.5,0.13,0.5);
+    //0.125
+    //0.75
+    static PIDController PID = new PIDController(2.25,0.075,0.5);
     static boolean xButtonPressed = false;
     static boolean yButtonPressed = false;
+    static boolean aButtonPressed = false;
+    
+//I made these changes (adi)
+     //private final AbsoluteEncoder throughBore;
+    // throughBore = pivotMotor2.getAbsoluteEncoder(Type.kDutyCycle);
+
+
+    //I'm adding this (adi)
+    static boolean LeftBumperPressed = false;
+    static boolean PID4 = false;
     static boolean bButtonPressed = false;
+    //
     static boolean PID1 = false;
     static boolean PID2 = false;
     static boolean PID3 = false;
+
     static double expectedAngle = 0.0;
 
     //Limelight Stuff
 
     //Table of values                                        
-    NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
+    static NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
     NetworkTableEntry tx = table.getEntry("tx");
-    NetworkTableEntry ty = table.getEntry("ty");
+    static NetworkTableEntry ty = table.getEntry("ty");
     NetworkTableEntry ta = table.getEntry("ta");
-    NetworkTableEntry tid = table.getEntry("tid");
+    static NetworkTableEntry tid = table.getEntry("tid");
 
     //read values periodically
     public double x = tx.getDouble(0.0);
@@ -50,21 +69,21 @@ public class ShooterTest1 extends SubsystemBase
     public double area = ta.getDouble(0.0);
 
     //Constants
-    double kSpeakerHeightInches = 78;
-    double kSpeakerTagHeightInches = 57;
-    double kBotHeightInches = 9;
-    double kLimelightAngle = 31;
-    double kSpeakerShotMaxRadius = 150;
-    double kSpeakerShotMinRadius = 0;
+    static double kSpeakerHeightInches = 78;
+    static double kSpeakerTagHeightInches = 57;
+    static double kBotHeightInches = 9;
+    static double kLimelightAngle = 31;
+    static double kSpeakerShotMaxRadius = 150;
+    static double kSpeakerShotMinRadius = 0;
 
-    private static DutyCycleEncoder throughBore = new DutyCycleEncoder(0);
+//This actually works!
 
-    
- 
+    private static SparkAbsoluteEncoder throughBore = pivotMotor2.getAbsoluteEncoder();  
 
-  //Limelight Updates
+
+      //Limelight Updates
   //This method is always running no matter what
-public void SpeakerAllignment()
+public static void SpeakerAllignment()
 {
     long currentId = tid.getInteger(-1);
     SmartDashboard.putNumber("Current ID",currentId);
@@ -106,56 +125,63 @@ public void SpeakerAllignment()
     }
 }
 
-public void resetPosition()
-{
-    //Set back to 0
-    throughBore.reset();    
-}
 
 
-    public void shoot(double getRightTrigger, double getAxis, boolean getAButtonPressed, boolean getAButtonReleased , 
-    boolean xButtonPressed,double getLeftTrigger,boolean yButtonPressed,boolean bButtonPressed)
+    public static void shoot(double RightTrigger, double getAxis, double LeftTrigger,
+    boolean xButtonPressed,boolean LeftBumperPressed,boolean yButtonPressed,boolean aButtonPressed,boolean bButtonPressed)
     {
      
         PID.setTolerance(0.05);
-        SmartDashboard.putNumber("Encoder Data NEW VALUE",throughBore.get());
-        System.out.println("encoder value: " + throughBore.get());
+        SmartDashboard.putNumber("Encoder Data",throughBore.getPosition());
+       // System.out.println("new encoder value: " + throughBore2.getPosition());
         pivotMotor2.follow(pivotMotor1,true);
         if(PID3)
         {
-            if(Math.abs(throughBore.get()-0.1)<0.05)
+            if(Math.abs(throughBore.getPosition()-0.0912)<0.05)
             {
                 PID3 = false;
             }  
             else
             {
-                SmartDashboard.putNumber("Voltage",PID.calculate(throughBore.get(),0.1));
-                pivotMotor1.set(PID.calculate(throughBore.get(),0.1));
+                SmartDashboard.putNumber("Voltage",PID.calculate(throughBore.getPosition(),0.0912));
+                pivotMotor1.set(PID.calculate(throughBore.getPosition(),0.0912));
             } 
         }
         else if(PID2)
         {
-             if(Math.abs(throughBore.get()-expectedAngle)<0.05)
+             if(Math.abs(throughBore.getPosition()-expectedAngle)<0.05)
             {
                 PID2 = false;
             }  
             else
             {
-                SmartDashboard.putNumber("Voltage",PID.calculate(throughBore.get(),expectedAngle));
-                pivotMotor1.set(PID.calculate(throughBore.get(),expectedAngle));
+                SmartDashboard.putNumber("Voltage",PID.calculate(throughBore.getPosition(),expectedAngle));
+                pivotMotor1.set(PID.calculate(throughBore.getPosition(),expectedAngle));
             } 
         }
         else if(PID1)
         {
-           
-            if(Math.abs(throughBore.get()-0.75)<0.05)
+            if(Math.abs(throughBore.getPosition()-0.333)<0.05)
             {
                 PID1 = false;
             }  
             else
             {
-                SmartDashboard.putNumber("Voltage",PID.calculate(throughBore.get(),0.75));
-                pivotMotor1.set(PID.calculate(throughBore.get(),0.75));
+                SmartDashboard.putNumber("Voltage",PID.calculate(throughBore.getPosition(),0.333));
+                pivotMotor1.set(PID.calculate(throughBore.getPosition(),0.333));
+            } 
+        }
+       //shooter PID at "0.52" (added by adi)
+        else if (PID4)
+        {
+            if(Math.abs(throughBore.getPosition()-0.655)<0.05)
+            {
+                PID4 = false;
+            }  
+            else
+            {
+                SmartDashboard.putNumber("Voltage",PID.calculate(throughBore.getPosition(),0.655));
+                pivotMotor1.set(PID.calculate(throughBore.getPosition(),0.655));
             } 
         }
         else
@@ -164,28 +190,33 @@ public void resetPosition()
             {
                 PID1 = true;
             }
-            if(getRightTrigger == 1)
+            
+            //added by ADI 
+            if(bButtonPressed)
+            {
+                PID4 = true;
+            }
+            if(RightTrigger == 1)
             {
                 shooter2.follow(shooter1, true);
                 shooter1.setVoltage(11);
                 //shooter1.setInverted(!shooter2.getInverted());
             }
 
-            if (getRightTrigger == 0)
+            if (RightTrigger == 0)
             {
                 shooter1.stopMotor();
                 shooter2.stopMotor();
             }
 
-
-            if(getAButtonPressed)
+            if(LeftTrigger == 1)
             {
                 intake.setInverted(true);
-                intake.set(4000); //direction is good!
+                intake.set(2024); //direction is good!
             }
-            if(getAButtonReleased)
+            if(LeftTrigger == 0)
             {
-                intake.set(-400);
+                
                 intake.stopMotor();
             }
 
@@ -202,35 +233,31 @@ public void resetPosition()
                 stopPivot();
             }
 
-            //Method Rese
-            if(getLeftTrigger==1)
-            {
-                resetPosition();
-            }
+
 
             //E stop
             if(yButtonPressed)
             {
-                PID2 = true;
+                //PID2 = true;
                 SpeakerAllignment();
             }
 
-            if(bButtonPressed)
+            if(aButtonPressed)
             {
                 PID3 = true;
             }
         }
     }
 
-    public void stopPivot()
+    public static void stopPivot()
     {
         pivotMotor1.stopMotor();
         pivotMotor2.stopMotor();
     }
 
-    public void pivot(boolean upPivot, boolean downPivot)
+    public static void pivot(boolean upPivot, boolean downPivot)
     {
-        if(throughBore.getDistance()<=-900)
+        if(throughBore.getPosition()<=-900)
         {
            // pivotMotor1.stopMotor();
             //pivotMotor2.stopMotor();
@@ -241,18 +268,17 @@ public void resetPosition()
         if(upPivot)
         {
             SmartDashboard.putBoolean("Voltage ",true);
-            pivotMotor1.setVoltage(1.5);
+            pivotMotor1.setVoltage(2.5);
         }
         else if (downPivot) 
         {
             SmartDashboard.putBoolean("Voltage ",true);
-            pivotMotor1.setVoltage(-1.5);
+            pivotMotor1.setVoltage(-2);
         }
          }
     }
 
 }
-
 
 
 

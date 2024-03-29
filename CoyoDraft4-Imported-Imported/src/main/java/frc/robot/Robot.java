@@ -10,6 +10,7 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.subsystems.ShooterTest1;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -17,7 +18,9 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
  * the package after creating this project, you must also update the build.gradle file in the
  * project.
  */
+
 public class Robot extends TimedRobot {
+  static int counter1 = 0;
   private Command m_autonomousCommand;
 
   private RobotContainer m_robotContainer;
@@ -59,7 +62,7 @@ public class Robot extends TimedRobot {
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
-    
+    System.out.println("This method has run");
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 
     /*
@@ -77,7 +80,26 @@ public class Robot extends TimedRobot {
 
   /** This function is called periodically during autonomous. */
   @Override
-  public void autonomousPeriodic() {}
+  public void autonomousPeriodic() {
+    counter1++;
+    System.out.println("THIS IS RUNNING");
+     System.out.println("NUM "+counter1);
+    if(counter1<1000)
+    {
+      //Rev Up
+      // ShooterTest1.shoot(1,0,0,false,false,false,false,false);
+
+    }
+    else
+    {
+      //Launch
+      ShooterTest1.shoot(0,0,1,false,false,false,false,false);
+      //ShooterTest1.shoot(1,0,0,false,false,false,false,false);
+    }
+   
+    //Read Encoder values until its fully revvved up and then we can intake
+
+  }
 
   @Override
   public void teleopInit() {
